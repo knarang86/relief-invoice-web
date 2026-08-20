@@ -3,11 +3,15 @@ const FILES = [
   "./",
   "./index.html",
   "./styles.css",
+  "./config.js",
+  "./storage.js",
   "./app.js",
   "./invoice.js",
   "./pdf.js",
   "./manifest.json",
+  "./vendor/jspdf.umd.min.js",
   "./icons/icon.svg",
+  "./icons/apple-touch-icon.png",
   "https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js",
 ];
 
