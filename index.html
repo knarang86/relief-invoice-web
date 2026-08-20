@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="theme-color" content="#0f6b62" />
+    <title>Invoice</title>
+    <link rel="manifest" href="manifest.json" />
+    <link rel="apple-touch-icon" href="icons/icon.svg" />
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="app-header">
+        <div class="brand">
+          <strong>Invoice</strong>
+          <span>Create, save, or send a PDF</span>
+        </div>
+        <button class="icon-btn" id="open-settings" type="button">Details</button>
+      </header>
+
+      <section id="setup" class="hidden">
+        <div class="card">
+          <h2>Your details</h2>
+          <p class="hint">This appears at the top of every invoice. You only need to fill it in once.</p>
+          <p class="error" id="setup-error"></p>
+          <label for="s-name">Your name</label>
+          <input id="s-name" autocomplete="name" placeholder="Full name" />
+          <label for="s-email">Email</label>
+          <input id="s-email" type="email" autocomplete="email" placeholder="you@email.com" />
+          <label for="s-payEmail">Interac email (if different)</label>
+          <input id="s-payEmail" type="email" placeholder="Same as email is fine" />
+          <label for="s-phone">Phone</label>
+          <input id="s-phone" type="tel" autocomplete="tel" />
+          <label for="s-address">Address (optional)</label>
+          <input id="s-address" autocomplete="street-address" />
+          <label for="s-taxNumber">GST/HST number (optional)</label>
+          <input id="s-taxNumber" />
+          <label for="s-taxRate">Tax % (0 if you do not charge tax)</label>
+          <input id="s-taxRate" inputmode="decimal" placeholder="0" />
+          <label for="s-rate">Usual hourly rate</label>
+          <input id="s-rate" inputmode="decimal" placeholder="65" />
+          <label for="s-otRate">Usual overtime rate (optional)</label>
+          <input id="s-otRate" inputmode="decimal" placeholder="Leave blank to use 1.5×" />
+          <button class="primary" id="save-settings" type="button">Save and continue</button>
+        </div>
+      </section>
+
+      <section id="editor" class="hidden">
+        <div class="banner" id="home-banner">
+          <span>On iPhone: Share → Add to Home Screen. Then it opens like an app.</span>
+          <button type="button" id="dismiss-banner">OK</button>
+        </div>
+
+        <div class="card">
+          <h2>Who is this for?</h2>
+          <label for="employer">Pharmacy / employer</label>
+          <input id="employer" placeholder="Shoppers, Costco, hospital name…" />
+          <div class="chips" id="employers"></div>
+          <label for="employerEmail">Their email (optional, just for your notes)</label>
+          <input id="employerEmail" type="email" />
+          <label for="issuedDate">Invoice date</label>
+          <input id="issuedDate" type="date" />
+        </div>
+
+        <div class="card">
+          <h2>Hours</h2>
+          <p class="hint">Add each day you worked. Rate is the same for all regular hours.</p>
+          <label for="rate">Hourly rate</label>
+          <input id="rate" inputmode="decimal" />
+          <div id="shifts"></div>
+          <button class="secondary" id="add-shift" type="button">Add another day</button>
+        </div>
+
+        <div class="card">
+          <h2>Overtime (optional)</h2>
+          <label for="otHours">Overtime hours</label>
+          <input id="otHours" inputmode="decimal" placeholder="0" />
+          <label for="otRate">Overtime rate</label>
+          <input id="otRate" inputmode="decimal" placeholder="Leave blank to use 1.5×" />
+        </div>
+
+        <div class="card">
+          <h2>Notes (optional)</h2>
+          <textarea id="notes" placeholder="Coverage dates, PO number, extra context…"></textarea>
+        </div>
+
+        <div class="card hidden" id="recent-wrap">
+          <h2>Recent invoices</h2>
+          <p class="hint">Already created on this phone. Tap to open and save the PDF again.</p>
+          <div class="recent" id="recent"></div>
+        </div>
+
+        <div class="dock">
+          <div class="total-line">
+            <span>Total</span>
+            <strong id="live-total">$0.00</strong>
+          </div>
+          <button class="primary" id="preview-btn" type="button">Preview invoice</button>
+        </div>
+      </section>
+
+      <section id="preview" class="hidden">
+        <div class="card">
+          <div id="preview-doc" class="preview"></div>
+        </div>
+        <p class="error" id="share-error"></p>
+        <div class="dock no-print">
+          <button class="primary" id="share-btn" type="button">Save or send PDF</button>
+          <button class="secondary" id="print-btn" type="button">Print / Save as PDF</button>
+          <button class="secondary" id="back-edit" type="button">Edit</button>
+          <button class="secondary" id="new-btn" type="button">Start another invoice</button>
+        </div>
+      </section>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+    <script src="invoice.js"></script>
+    <script src="pdf.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
