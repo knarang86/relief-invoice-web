@@ -1,4 +1,4 @@
-const CACHE = "relief-invoice-v8";
+const CACHE = "relief-invoice-v9";
 const FILES = [
   "./",
   "./index.html",
