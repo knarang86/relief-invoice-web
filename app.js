@@ -273,35 +273,38 @@
       })
       .join("");
 
-    var meta =
-      "<p><strong>From:</strong> " +
-      escapeHtml(from.name || "") +
-      "</p>" +
-      (from.email ? "<p><strong>Email:</strong> " + escapeHtml(from.email) + "</p>" : "") +
-      (from.phone ? "<p><strong>Phone:</strong> " + escapeHtml(from.phone) + "</p>" : "") +
-      "<p><strong>To:</strong> " +
-      escapeHtml(to.name || "") +
-      "</p>" +
-      (to.address ? "<p>" + escapeHtml(to.address) + "</p>" : "") +
-      "<p><strong>Date Issued:</strong> " +
-      escapeHtml(Invoice.formatDate(invoice.issuedDate)) +
-      "</p>" +
-      (summary.workPeriod ? "<p><strong>Work Period:</strong> " + escapeHtml(summary.workPeriod) + "</p>" : "") +
-      "<p><strong>Payment Method:</strong> " +
-      escapeHtml(Config.paymentInstruction()) +
-      "</p>";
+    var fromDetails = [from.email, from.phone].filter(Boolean).map(escapeHtml).join("<br>");
+    var workPeriod = summary.workPeriod
+      ? '<p class="preview-work-period">Work Period: ' + escapeHtml(summary.workPeriod) + "</p>"
+      : "";
 
     $("preview-doc").innerHTML =
-      '<h1 class="preview-title">INVOICE</h1>' +
-      '<div class="preview-meta">' +
-      meta +
-      "</div>" +
+      '<div class="preview-bar"></div>' +
+      '<div class="preview-top">' +
+      "<div><h1>INVOICE</h1></div>" +
+      '<div class="preview-id muted">#' +
+      escapeHtml(invoice.invoiceNumber) +
+      "<br>Date Issued: " +
+      escapeHtml(Invoice.formatDate(invoice.issuedDate)) +
+      "</div></div>" +
+      '<div class="cols"><div><h3>FROM</h3><strong>' +
+      escapeHtml(from.name || "") +
+      "</strong><div class='muted'>" +
+      fromDetails +
+      "</div></div><div><h3>BILL TO</h3><strong>" +
+      escapeHtml(to.name || "") +
+      "</strong><div class='muted'>" +
+      escapeHtml(to.address || "") +
+      "</div></div></div>" +
+      workPeriod +
       '<table class="lines"><thead><tr><th>Description</th><th class="num">Hours</th><th class="num">Rate</th><th class="num">Amount</th></tr></thead><tbody>' +
       rows +
-      '<tr class="total-row"><td>Total Due</td><td></td><td></td><td class="num">' +
+      "</tbody></table>" +
+      '<div class="totals"><div class="total-due"><strong>Total Due</strong><strong>' +
       escapeHtml(Invoice.formatMoney(summary.total, summary.currency)) +
-      "</td></tr></tbody></table>" +
-      (invoice.notes ? "<p class='muted' style='margin-top:12px'>" + escapeHtml(invoice.notes) + "</p>" : "");
+      "</strong></div></div>" +
+      (invoice.notes ? "<p class='preview-notes'><strong>Notes</strong><br>" + escapeHtml(invoice.notes) + "</p>" : "") +
+      '<div class="pay-box">Payment Method: ' + escapeHtml(Config.paymentInstruction()) + "</div>";
   }
 
   function escapeHtml(value) {
