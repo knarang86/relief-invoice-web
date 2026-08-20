@@ -19,37 +19,23 @@
           <strong>Invoice</strong>
           <span>Create, save, or send a PDF</span>
         </div>
-        <button class="icon-btn" id="open-settings" type="button">Details</button>
+        <button class="icon-btn" id="open-settings" type="button">Rates</button>
       </header>
 
       <section id="setup" class="hidden">
         <div class="card">
-          <h2>Your details</h2>
-          <p class="hint">This appears at the top of every invoice. You only need to fill it in once.</p>
+          <h2>Default rates</h2>
+          <p class="hint">Saved on this phone. You can still change the rate on each invoice.</p>
           <p class="error" id="setup-error"></p>
-          <label for="s-name">Your name</label>
-          <input id="s-name" autocomplete="name" placeholder="Full name" />
-          <label for="s-email">Email</label>
-          <input id="s-email" type="email" autocomplete="email" placeholder="you@email.com" />
-          <label for="s-payEmail">Interac email (if different)</label>
-          <input id="s-payEmail" type="email" placeholder="Same as email is fine" />
-          <label for="s-phone">Phone</label>
-          <input id="s-phone" type="tel" autocomplete="tel" />
-          <label for="s-address">Address (optional)</label>
-          <input id="s-address" autocomplete="street-address" />
-          <label for="s-taxNumber">GST/HST number (optional)</label>
-          <input id="s-taxNumber" />
-          <label for="s-taxRate">Tax % (0 if you do not charge tax)</label>
-          <input id="s-taxRate" inputmode="decimal" placeholder="0" />
           <label for="s-rate">Usual hourly rate</label>
           <input id="s-rate" inputmode="decimal" placeholder="65" />
           <label for="s-otRate">Usual overtime rate (optional)</label>
           <input id="s-otRate" inputmode="decimal" placeholder="Leave blank to use 1.5×" />
-          <button class="primary" id="save-settings" type="button">Save and continue</button>
+          <button class="primary" id="save-settings" type="button">Save</button>
         </div>
       </section>
 
-      <section id="editor" class="hidden">
+      <section id="editor">
         <div class="banner" id="home-banner">
           <span>On iPhone: Share → Add to Home Screen. Then it opens like an app.</span>
           <button type="button" id="dismiss-banner">OK</button>
@@ -60,8 +46,8 @@
           <label for="employer">Pharmacy / employer</label>
           <input id="employer" placeholder="Shoppers, Costco, hospital name…" />
           <div class="chips" id="employers"></div>
-          <label for="employerEmail">Their email (optional, just for your notes)</label>
-          <input id="employerEmail" type="email" />
+          <label for="employerAddress">Their address (optional)</label>
+          <input id="employerAddress" placeholder="Street, city… appears on invoice" />
           <label for="issuedDate">Invoice date</label>
           <input id="issuedDate" type="date" />
         </div>
@@ -90,7 +76,7 @@
 
         <div class="card hidden" id="recent-wrap">
           <h2>Recent invoices</h2>
-          <p class="hint">Already created on this phone. Tap to open and save the PDF again.</p>
+          <p class="hint">Last 12 on this phone. Tap to open and save the PDF again.</p>
           <div class="recent" id="recent"></div>
         </div>
 
@@ -117,8 +103,11 @@
       </section>
     </div>
 
+    <script src="vendor/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+    <script src="config.js"></script>
     <script src="invoice.js"></script>
+    <script src="storage.js"></script>
     <script src="pdf.js"></script>
     <script src="app.js"></script>
   </body>

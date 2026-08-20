@@ -120,14 +120,25 @@ textarea {
 
 .row {
   display: grid;
-  grid-template-columns: 1.4fr 0.8fr auto;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.8fr) 44px;
   gap: 8px;
-  align-items: end;
-  margin-bottom: 8px;
+  align-items: start;
+  margin-bottom: 12px;
+}
+
+.row > div {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .row input {
   margin-bottom: 0;
+}
+
+.row .remove {
+  align-self: center;
+  margin-top: 22px;
 }
 
 .remove {
@@ -212,21 +223,18 @@ textarea {
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 18px;
+  font-size: 0.95rem;
 }
 
-.preview-top {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  border-bottom: 1px solid var(--line);
-  padding-bottom: 12px;
-  margin-bottom: 14px;
+.preview-title {
+  text-align: center;
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 0 0 16px;
 }
 
-.preview h1 {
-  margin: 0;
-  color: var(--teal);
-  font-size: 1.5rem;
+.preview-meta p {
+  margin: 0 0 6px;
 }
 
 .muted {
@@ -234,37 +242,22 @@ textarea {
   font-size: 0.92rem;
 }
 
-.cols {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.cols h3 {
-  margin: 0 0 6px;
-  font-size: 0.75rem;
-  letter-spacing: 0.08em;
-  color: var(--teal);
-}
-
 .lines {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.92rem;
+  margin-top: 14px;
+}
+
+.lines th,
+.lines td {
+  border: 1px solid var(--ink);
+  padding: 8px 10px;
 }
 
 .lines th {
   text-align: left;
-  font-size: 0.72rem;
-  letter-spacing: 0.06em;
-  color: var(--teal);
-  padding-bottom: 8px;
-}
-
-.lines td {
-  padding: 7px 0;
-  border-top: 1px solid var(--line);
+  font-size: 0.85rem;
 }
 
 .lines .num {
@@ -272,21 +265,8 @@ textarea {
   white-space: nowrap;
 }
 
-.totals {
-  margin-top: 10px;
-  text-align: right;
-}
-
-.totals div {
-  margin-top: 6px;
-}
-
-.pay-box {
-  margin-top: 16px;
-  background: var(--teal-soft);
-  border-radius: 10px;
-  padding: 12px;
-  font-size: 0.92rem;
+.lines .total-row td {
+  font-weight: 700;
 }
 
 .banner {

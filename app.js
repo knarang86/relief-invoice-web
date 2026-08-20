@@ -1,25 +1,16 @@
 (function () {
   "use strict";
 
-  var STORAGE_KEY = "relief-invoice-v1";
+  var Config = window.InvoiceConfig;
+  var Storage = window.InvoiceStorage;
 
   var state = {
-    settings: {
-      name: "",
-      email: "",
-      phone: "",
-      address: "",
-      taxNumber: "",
-      taxRate: 0,
-      defaultRate: "",
-      defaultOtRate: "",
-      paymentEmail: "",
-    },
     lastInvoiceNumber: "",
     employers: [],
     invoices: [],
-    current: emptyDraft(),
+    preferences: { defaultRate: "", defaultOtRate: "" },
     bannerDismissed: false,
+    current: emptyDraft(),
   };
 
   function emptyDraft() {
@@ -27,7 +18,7 @@
       invoiceNumber: "",
       issuedDate: todayIso(),
       employer: "",
-      employerEmail: "",
+      employerAddress: "",
       shifts: [{ date: todayIso(), hours: "8", rate: "" }],
       otHours: "",
       otRate: "",
@@ -48,30 +39,45 @@
 
   function load() {
     try {
-      var raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
-      var saved = JSON.parse(raw);
-      state.settings = Object.assign(state.settings, saved.settings || {});
-      state.lastInvoiceNumber = saved.lastInvoiceNumber || "";
-      state.employers = saved.employers || [];
-      state.invoices = saved.invoices || [];
-      state.bannerDismissed = Boolean(saved.bannerDismissed);
+      var raw = localStorage.getItem(Config.STORAGE_KEY);
+      if (!raw) {
+        var legacy = localStorage.getItem("relief-invoice-v1");
+        if (legacy) {
+          var old = JSON.parse(legacy);
+          state = Storage.deserializeState({
+            lastInvoiceNumber: old.lastInvoiceNumber,
+            employers: old.employers,
+            invoices: migrateInvoices(old.invoices),
+            preferences: {
+              defaultRate: (old.settings && old.settings.defaultRate) || "",
+              defaultOtRate: (old.settings && old.settings.defaultOtRate) || "",
+            },
+            bannerDismissed: old.bannerDismissed,
+          });
+          persist();
+          return;
+        }
+        return;
+      }
+      state = Object.assign(state, Storage.deserializeState(JSON.parse(raw)));
     } catch (err) {
       /* ignore corrupt storage */
     }
   }
 
+  function migrateInvoices(invoices) {
+    if (!Array.isArray(invoices)) return [];
+    return invoices.map(function (invoice) {
+      if (invoice.to && invoice.to.email && !invoice.to.address) {
+        invoice.to.address = invoice.to.email;
+        delete invoice.to.email;
+      }
+      return invoice;
+    });
+  }
+
   function persist() {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({
-        settings: state.settings,
-        lastInvoiceNumber: state.lastInvoiceNumber,
-        employers: state.employers.slice(0, 8),
-        invoices: state.invoices.slice(0, 12),
-        bannerDismissed: state.bannerDismissed,
-      })
-    );
+    localStorage.setItem(Config.STORAGE_KEY, JSON.stringify(Storage.serializeState(state)));
   }
 
   function show(id) {
@@ -82,33 +88,23 @@
   }
 
   function fillSettingsForm() {
-    $("s-name").value = state.settings.name || "";
-    $("s-email").value = state.settings.email || "";
-    $("s-phone").value = state.settings.phone || "";
-    $("s-address").value = state.settings.address || "";
-    $("s-taxNumber").value = state.settings.taxNumber || "";
-    $("s-taxRate").value = state.settings.taxRate || "";
-    $("s-rate").value = state.settings.defaultRate || "";
-    $("s-otRate").value = state.settings.defaultOtRate || "";
-    $("s-payEmail").value = state.settings.paymentEmail || state.settings.email || "";
+    $("s-rate").value = state.preferences.defaultRate || "";
+    $("s-otRate").value = state.preferences.defaultOtRate || "";
   }
 
   function readSettingsForm() {
-    state.settings = {
-      name: $("s-name").value.trim(),
-      email: $("s-email").value.trim(),
-      phone: $("s-phone").value.trim(),
-      address: $("s-address").value.trim(),
-      taxNumber: $("s-taxNumber").value.trim(),
-      taxRate: Number($("s-taxRate").value || 0),
+    state.preferences = {
       defaultRate: $("s-rate").value.trim(),
       defaultOtRate: $("s-otRate").value.trim(),
-      paymentEmail: $("s-payEmail").value.trim(),
     };
   }
 
   function defaultRate() {
-    return state.settings.defaultRate || "";
+    return state.preferences.defaultRate || "";
+  }
+
+  function senderProfile() {
+    return Object.assign({}, Config.PROFILE);
   }
 
   function renderShifts() {
@@ -188,7 +184,7 @@
 
   function collectDraft() {
     state.current.employer = $("employer").value.trim();
-    state.current.employerEmail = $("employerEmail").value.trim();
+    state.current.employerAddress = $("employerAddress").value.trim();
     state.current.issuedDate = $("issuedDate").value || todayIso();
     state.current.notes = $("notes").value.trim();
     state.current.otHours = $("otHours").value.trim();
@@ -223,21 +219,13 @@
       invoiceNumber: state.current.invoiceNumber || Invoice.nextInvoiceNumber(state.lastInvoiceNumber),
       issuedDate: state.current.issuedDate,
       currency: "CAD",
-      from: {
-        name: state.settings.name,
-        email: state.settings.email,
-        phone: state.settings.phone,
-        address: state.settings.address,
-        taxNumber: state.settings.taxNumber,
-        paymentEmail: state.settings.paymentEmail || state.settings.email,
-      },
+      from: senderProfile(),
       to: {
         name: state.current.employer,
-        email: state.current.employerEmail,
+        address: state.current.employerAddress,
       },
       shifts: shifts,
       overtime: overtime,
-      taxRate: Number(state.settings.taxRate || 0),
       notes: state.current.notes,
     };
   }
@@ -251,11 +239,11 @@
 
   function fillEditor() {
     $("employer").value = state.current.employer;
-    $("employerEmail").value = state.current.employerEmail;
+    $("employerAddress").value = state.current.employerAddress;
     $("issuedDate").value = state.current.issuedDate || todayIso();
     $("rate").value = state.current.rate || defaultRate();
     $("otHours").value = state.current.otHours;
-    $("otRate").value = state.current.otRate || state.settings.defaultOtRate || "";
+    $("otRate").value = state.current.otRate || state.preferences.defaultOtRate || "";
     $("notes").value = state.current.notes;
     renderShifts();
     renderEmployers();
@@ -277,6 +265,7 @@
           line.hours.toFixed(2) +
           '</td><td class="num">' +
           escapeHtml(Invoice.formatMoney(line.rate, summary.currency)) +
+          "/hr" +
           '</td><td class="num">' +
           escapeHtml(Invoice.formatMoney(line.amount, summary.currency)) +
           "</td></tr>"
@@ -284,50 +273,35 @@
       })
       .join("");
 
-    var taxRow =
-      summary.taxRate > 0
-        ? "<div>Tax (" +
-          summary.taxRate +
-          "%): " +
-          escapeHtml(Invoice.formatMoney(summary.tax, summary.currency)) +
-          "</div>"
-        : "";
-
-    var payTo = from.paymentEmail || from.email;
-    var pay = payTo
-      ? '<div class="pay-box">Please pay by Interac e-Transfer to ' + escapeHtml(payTo) + "</div>"
-      : "";
+    var meta =
+      "<p><strong>From:</strong> " +
+      escapeHtml(from.name || "") +
+      "</p>" +
+      (from.email ? "<p><strong>Email:</strong> " + escapeHtml(from.email) + "</p>" : "") +
+      (from.phone ? "<p><strong>Phone:</strong> " + escapeHtml(from.phone) + "</p>" : "") +
+      "<p><strong>To:</strong> " +
+      escapeHtml(to.name || "") +
+      "</p>" +
+      (to.address ? "<p>" + escapeHtml(to.address) + "</p>" : "") +
+      "<p><strong>Date Issued:</strong> " +
+      escapeHtml(Invoice.formatDate(invoice.issuedDate)) +
+      "</p>" +
+      (summary.workPeriod ? "<p><strong>Work Period:</strong> " + escapeHtml(summary.workPeriod) + "</p>" : "") +
+      "<p><strong>Payment Method:</strong> " +
+      escapeHtml(Config.paymentInstruction()) +
+      "</p>";
 
     $("preview-doc").innerHTML =
-      '<div class="preview-top"><div><h1>INVOICE</h1></div><div class="muted">#' +
-      escapeHtml(invoice.invoiceNumber) +
-      "<br>Date: " +
-      escapeHtml(Invoice.formatDate(invoice.issuedDate)) +
-      "</div></div>" +
-      '<div class="cols"><div><h3>FROM</h3><strong>' +
-      escapeHtml(from.name || "") +
-      "</strong><div class='muted'>" +
-      [from.email, from.phone, from.address, from.taxNumber ? "GST/HST " + from.taxNumber : ""]
-        .filter(Boolean)
-        .map(escapeHtml)
-        .join("<br>") +
-      "</div></div><div><h3>BILL TO</h3><strong>" +
-      escapeHtml(to.name || "") +
-      "</strong><div class='muted'>" +
-      escapeHtml(to.email || "") +
-      "</div></div></div>" +
+      '<h1 class="preview-title">INVOICE</h1>' +
+      '<div class="preview-meta">' +
+      meta +
+      "</div>" +
       '<table class="lines"><thead><tr><th>Description</th><th class="num">Hours</th><th class="num">Rate</th><th class="num">Amount</th></tr></thead><tbody>' +
       rows +
-      "</tbody></table>" +
-      '<div class="totals"><div>Subtotal: ' +
-      escapeHtml(Invoice.formatMoney(summary.subtotal, summary.currency)) +
-      "</div>" +
-      taxRow +
-      "<div><strong>Total: " +
+      '<tr class="total-row"><td>Total Due</td><td></td><td></td><td class="num">' +
       escapeHtml(Invoice.formatMoney(summary.total, summary.currency)) +
-      "</strong></div></div>" +
-      (invoice.notes ? "<p class='muted'>" + escapeHtml(invoice.notes) + "</p>" : "") +
-      pay;
+      "</td></tr></tbody></table>" +
+      (invoice.notes ? "<p class='muted' style='margin-top:12px'>" + escapeHtml(invoice.notes) + "</p>" : "");
   }
 
   function escapeHtml(value) {
@@ -338,23 +312,10 @@
       .replace(/"/g, "&quot;");
   }
 
-  function rememberEmployer(name) {
-    if (!name) return;
-    state.employers = [name].concat(
-      state.employers.filter(function (item) {
-        return item !== name;
-      })
-    );
-  }
-
   function saveInvoice(invoice) {
     state.lastInvoiceNumber = invoice.invoiceNumber;
-    state.invoices = [invoice].concat(
-      state.invoices.filter(function (item) {
-        return item.invoiceNumber !== invoice.invoiceNumber;
-      })
-    );
-    rememberEmployer(invoice.to && invoice.to.name);
+    state.invoices = Storage.upsertInvoice(state.invoices, invoice);
+    state.employers = Storage.rememberEmployer(state.employers, invoice.to && invoice.to.name);
     persist();
   }
 
@@ -418,13 +379,9 @@
   function bind() {
     $("save-settings").addEventListener("click", function () {
       readSettingsForm();
-      if (!state.settings.name) {
-        $("setup-error").textContent = "Add your name so it can appear on the invoice.";
-        return;
-      }
       $("setup-error").textContent = "";
       persist();
-      startNew();
+      show("editor");
     });
 
     $("open-settings").addEventListener("click", function () {
@@ -438,7 +395,7 @@
       updateTotal();
     });
 
-    ["employer", "employerEmail", "issuedDate", "rate", "otHours", "otRate", "notes"].forEach(function (id) {
+    ["employer", "employerAddress", "issuedDate", "rate", "otHours", "otRate", "notes"].forEach(function (id) {
       $(id).addEventListener("input", updateTotal);
     });
 
@@ -471,12 +428,7 @@
 
   load();
   bind();
-  if (!state.settings.name) {
-    fillSettingsForm();
-    show("setup");
-  } else {
-    startNew();
-  }
+  startNew();
 
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("sw.js").catch(function () {});
