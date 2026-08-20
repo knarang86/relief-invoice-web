@@ -19,7 +19,10 @@
           <strong>Invoice</strong>
           <span>Create, save, or send a PDF</span>
         </div>
-        <button class="icon-btn" id="open-settings" type="button">Details</button>
+        <nav class="view-tabs" id="view-tabs" aria-label="Main sections">
+          <button class="view-tab active" id="tab-invoice" type="button" data-view="editor">Invoice</button>
+          <button class="view-tab" id="tab-details" type="button" data-view="setup">Details</button>
+        </nav>
       </header>
 
       <section id="setup" class="hidden">
