@@ -77,6 +77,31 @@ button,
   box-shadow: var(--shadow);
 }
 
+.view-tabs {
+  display: flex;
+  flex-shrink: 0;
+  background: var(--card);
+  border-radius: 999px;
+  padding: 4px;
+  box-shadow: var(--shadow);
+}
+
+.view-tab {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  border-radius: 999px;
+  min-height: 36px;
+  padding: 0 14px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.view-tab.active {
+  background: var(--teal-soft);
+  color: var(--teal-dark);
+}
+
 .card {
   background: var(--card);
   border-radius: var(--radius);
