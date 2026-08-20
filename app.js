@@ -145,10 +145,10 @@
       var row = document.createElement("div");
       row.className = "row";
       row.innerHTML =
-        '<div><span class="field-label">Date</span><input type="date" data-field="date" value="' +
+        '<div class="shift-date"><span class="field-label">Date</span><input type="date" data-field="date" value="' +
         (shift.date || "") +
         '"></div>' +
-        '<div><span class="field-label">Hours</span><input inputmode="decimal" data-field="hours" value="' +
+        '<div class="shift-hours"><span class="field-label">Hours</span><input inputmode="decimal" data-field="hours" value="' +
         (shift.hours || "") +
         '"></div>' +
         '<button type="button" class="remove" aria-label="Remove day">✕</button>';

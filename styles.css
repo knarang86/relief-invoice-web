@@ -119,10 +119,11 @@ textarea {
 }
 
 .row {
+  --hours-col: 64px;
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.8fr) 44px;
+  grid-template-columns: minmax(0, 1fr) var(--hours-col) 44px;
   gap: 8px;
-  align-items: start;
+  align-items: end;
   margin-bottom: 12px;
 }
 
@@ -132,13 +133,30 @@ textarea {
   min-width: 0;
 }
 
+.row .shift-hours {
+  width: var(--hours-col);
+  flex-shrink: 0;
+}
+
 .row input {
   margin-bottom: 0;
+  min-width: 0;
+  width: 100%;
+}
+
+.row .shift-hours input {
+  text-align: center;
+  padding-left: 6px;
+  padding-right: 6px;
+}
+
+.row .field-label {
+  margin-bottom: 6px;
 }
 
 .row .remove {
-  align-self: center;
-  margin-top: 22px;
+  align-self: end;
+  margin-bottom: 0;
 }
 
 .remove {
@@ -379,17 +397,6 @@ textarea {
 }
 
 @media (max-width: 430px) {
-  .row {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-
-  .row .remove {
-    justify-self: end;
-    align-self: start;
-    margin-top: 0;
-  }
-
   .preview-top,
   .cols {
     grid-template-columns: 1fr;
