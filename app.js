@@ -93,7 +93,35 @@
     ["setup", "editor", "preview"].forEach(function (name) {
       $(name).classList.toggle("hidden", name !== id);
     });
+    updateViewTabs(id);
     window.scrollTo(0, 0);
+  }
+
+  function updateViewTabs(id) {
+    var tabs = $("view-tabs");
+    if (!tabs) return;
+    tabs.classList.toggle("hidden", id === "preview");
+    ["editor", "setup"].forEach(function (view) {
+      var tab = tabs.querySelector('[data-view="' + view + '"]');
+      if (tab) tab.classList.toggle("active", id === view);
+    });
+  }
+
+  function goToSetup() {
+    fillSettingsForm();
+    show("setup");
+  }
+
+  function goToEditor() {
+    readSettingsForm();
+    if (state.profile.name) {
+      $("setup-error").textContent = "";
+      persist();
+      if ($("rate") && !$("rate").value.trim()) {
+        $("rate").value = defaultRate();
+      }
+    }
+    show("editor");
   }
 
   function fillSettingsForm() {
@@ -419,13 +447,11 @@
       }
       $("setup-error").textContent = "";
       persist();
-      show("editor");
+      goToEditor();
     });
 
-    $("open-settings").addEventListener("click", function () {
-      fillSettingsForm();
-      show("setup");
-    });
+    $("tab-invoice").addEventListener("click", goToEditor);
+    $("tab-details").addEventListener("click", goToSetup);
 
     $("add-shift").addEventListener("click", function () {
       state.current.shifts.push({ date: nextShiftDate(), hours: "8", rate: defaultRate() });
