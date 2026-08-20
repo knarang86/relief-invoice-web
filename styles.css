@@ -378,6 +378,29 @@ textarea {
   min-height: 52px;
 }
 
+@media (max-width: 430px) {
+  .row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .row .remove {
+    justify-self: end;
+    align-self: start;
+    margin-top: 0;
+  }
+
+  .preview-top,
+  .cols {
+    grid-template-columns: 1fr;
+    display: grid;
+  }
+
+  .preview-id {
+    text-align: left;
+  }
+}
+
 @media print {
   body {
     background: #fff;

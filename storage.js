@@ -16,6 +16,12 @@
       lastInvoiceNumber: state.lastInvoiceNumber || "",
       employers: trimList(state.employers, Config.EMPLOYER_CHIP_LIMIT),
       invoices: trimList(state.invoices, Config.RECENT_INVOICE_LIMIT),
+      profile: {
+        name: state.profile && state.profile.name ? state.profile.name : "",
+        email: state.profile && state.profile.email ? state.profile.email : "",
+        phone: state.profile && state.profile.phone ? state.profile.phone : "",
+        paymentEmail: state.profile && state.profile.paymentEmail ? state.profile.paymentEmail : "",
+      },
       preferences: {
         defaultRate: state.preferences && state.preferences.defaultRate ? state.preferences.defaultRate : "",
         defaultOtRate: state.preferences && state.preferences.defaultOtRate ? state.preferences.defaultOtRate : "",
@@ -30,6 +36,12 @@
         lastInvoiceNumber: "",
         employers: [],
         invoices: [],
+        profile: {
+          name: "",
+          email: "",
+          phone: "",
+          paymentEmail: "",
+        },
         preferences: { defaultRate: "", defaultOtRate: "" },
         bannerDismissed: false,
       };
@@ -39,6 +51,12 @@
       lastInvoiceNumber: raw.lastInvoiceNumber || "",
       employers: Array.isArray(raw.employers) ? raw.employers : [],
       invoices: Array.isArray(raw.invoices) ? raw.invoices : [],
+      profile: {
+        name: (raw.profile && raw.profile.name) || "",
+        email: (raw.profile && raw.profile.email) || "",
+        phone: (raw.profile && raw.profile.phone) || "",
+        paymentEmail: (raw.profile && raw.profile.paymentEmail) || "",
+      },
       preferences: {
         defaultRate: (raw.preferences && raw.preferences.defaultRate) || "",
         defaultOtRate: (raw.preferences && raw.preferences.defaultOtRate) || "",

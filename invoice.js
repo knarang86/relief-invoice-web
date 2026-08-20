@@ -53,11 +53,16 @@
 
   function formatWorkPeriod(shifts) {
     var dates = [];
+    var seen = {};
     var i;
     var list = Array.isArray(shifts) ? shifts : [];
     for (i = 0; i < list.length; i += 1) {
-      var parsed = parseLocalDate(list[i].date);
-      if (parsed) dates.push(parsed);
+      var iso = list[i].date;
+      var parsed = parseLocalDate(iso);
+      if (parsed && iso && !seen[iso]) {
+        seen[iso] = true;
+        dates.push(parsed);
+      }
     }
     if (!dates.length) return "";
     dates.sort(function (a, b) {

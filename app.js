@@ -8,6 +8,7 @@
     lastInvoiceNumber: "",
     employers: [],
     invoices: [],
+    profile: Object.assign({}, Config.PROFILE),
     preferences: { defaultRate: "", defaultOtRate: "" },
     bannerDismissed: false,
     current: emptyDraft(),
@@ -48,6 +49,14 @@
             lastInvoiceNumber: old.lastInvoiceNumber,
             employers: old.employers,
             invoices: migrateInvoices(old.invoices),
+            profile: {
+              name: (old.settings && old.settings.name) || Config.PROFILE.name,
+              email: (old.settings && old.settings.email) || Config.PROFILE.email,
+              phone: (old.settings && old.settings.phone) || Config.PROFILE.phone,
+              paymentEmail:
+                (old.settings && (old.settings.paymentEmail || old.settings.email)) ||
+                Config.PROFILE.paymentEmail,
+            },
             preferences: {
               defaultRate: (old.settings && old.settings.defaultRate) || "",
               defaultOtRate: (old.settings && old.settings.defaultOtRate) || "",
@@ -88,11 +97,21 @@
   }
 
   function fillSettingsForm() {
+    $("s-name").value = state.profile.name || Config.PROFILE.name || "";
+    $("s-email").value = state.profile.email || Config.PROFILE.email || "";
+    $("s-phone").value = state.profile.phone || Config.PROFILE.phone || "";
+    $("s-payEmail").value = state.profile.paymentEmail || state.profile.email || Config.PROFILE.paymentEmail || "";
     $("s-rate").value = state.preferences.defaultRate || "";
     $("s-otRate").value = state.preferences.defaultOtRate || "";
   }
 
   function readSettingsForm() {
+    state.profile = {
+      name: $("s-name").value.trim() || Config.PROFILE.name,
+      email: $("s-email").value.trim() || Config.PROFILE.email,
+      phone: $("s-phone").value.trim() || Config.PROFILE.phone,
+      paymentEmail: $("s-payEmail").value.trim() || $("s-email").value.trim() || Config.PROFILE.paymentEmail,
+    };
     state.preferences = {
       defaultRate: $("s-rate").value.trim(),
       defaultOtRate: $("s-otRate").value.trim(),
@@ -104,7 +123,19 @@
   }
 
   function senderProfile() {
-    return Object.assign({}, Config.PROFILE);
+    return Object.assign({}, Config.PROFILE, state.profile || {});
+  }
+
+  function nextShiftDate() {
+    var shifts = state.current.shifts;
+    var lastShift = shifts[shifts.length - 1];
+    var lastDate = lastShift && lastShift.date ? String(lastShift.date) : todayIso();
+    var parts = lastDate.split("-");
+    if (parts.length !== 3) return todayIso();
+    var next = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]) + 1, 12, 0, 0);
+    var m = String(next.getMonth() + 1).padStart(2, "0");
+    var day = String(next.getDate()).padStart(2, "0");
+    return next.getFullYear() + "-" + m + "-" + day;
   }
 
   function renderShifts() {
@@ -382,6 +413,10 @@
   function bind() {
     $("save-settings").addEventListener("click", function () {
       readSettingsForm();
+      if (!state.profile.name) {
+        $("setup-error").textContent = "Add your name so it appears on the invoice.";
+        return;
+      }
       $("setup-error").textContent = "";
       persist();
       show("editor");
@@ -393,7 +428,7 @@
     });
 
     $("add-shift").addEventListener("click", function () {
-      state.current.shifts.push({ date: todayIso(), hours: "8", rate: defaultRate() });
+      state.current.shifts.push({ date: nextShiftDate(), hours: "8", rate: defaultRate() });
       renderShifts();
       updateTotal();
     });

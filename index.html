@@ -19,19 +19,27 @@
           <strong>Invoice</strong>
           <span>Create, save, or send a PDF</span>
         </div>
-        <button class="icon-btn" id="open-settings" type="button">Rates</button>
+        <button class="icon-btn" id="open-settings" type="button">Details</button>
       </header>
 
       <section id="setup" class="hidden">
         <div class="card">
-          <h2>Default rates</h2>
-          <p class="hint">Saved on this phone. You can still change the rate on each invoice.</p>
+          <h2>Your details</h2>
+          <p class="hint">Saved on this phone. These appear on every invoice and can be edited any time.</p>
           <p class="error" id="setup-error"></p>
+          <label for="s-name">Your name</label>
+          <input id="s-name" autocomplete="name" />
+          <label for="s-email">Email</label>
+          <input id="s-email" type="email" autocomplete="email" />
+          <label for="s-phone">Phone</label>
+          <input id="s-phone" type="tel" autocomplete="tel" />
+          <label for="s-payEmail">Payment email</label>
+          <input id="s-payEmail" type="email" autocomplete="email" />
           <label for="s-rate">Usual hourly rate</label>
           <input id="s-rate" inputmode="decimal" placeholder="65" />
           <label for="s-otRate">Usual overtime rate (optional)</label>
           <input id="s-otRate" inputmode="decimal" placeholder="Leave blank to use 1.5×" />
-          <button class="primary" id="save-settings" type="button">Save</button>
+          <button class="primary" id="save-settings" type="button">Save details</button>
         </div>
       </section>
 
