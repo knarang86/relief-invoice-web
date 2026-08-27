@@ -16,6 +16,8 @@
       lastInvoiceNumber: state.lastInvoiceNumber || "",
       employers: trimList(state.employers, Config.EMPLOYER_CHIP_LIMIT),
       invoices: trimList(state.invoices, Config.RECENT_INVOICE_LIMIT),
+      artists: trimList(state.artists, Config.ARTIST_CHIP_LIMIT),
+      organizers: trimList(state.organizers, Config.EMPLOYER_CHIP_LIMIT),
       profile: {
         name: state.profile && state.profile.name ? state.profile.name : "",
         email: state.profile && state.profile.email ? state.profile.email : "",
@@ -25,6 +27,11 @@
       preferences: {
         defaultRate: state.preferences && state.preferences.defaultRate ? state.preferences.defaultRate : "",
         defaultOtRate: state.preferences && state.preferences.defaultOtRate ? state.preferences.defaultOtRate : "",
+        invoiceType: state.preferences && state.preferences.invoiceType === "honorarium" ? "honorarium" : "hours",
+        honorariumPaymentEmail:
+          state.preferences && state.preferences.honorariumPaymentEmail
+            ? state.preferences.honorariumPaymentEmail
+            : "",
       },
       bannerDismissed: Boolean(state.bannerDismissed),
     };
@@ -36,13 +43,15 @@
         lastInvoiceNumber: "",
         employers: [],
         invoices: [],
+        artists: [],
+        organizers: [],
         profile: {
           name: "",
           email: "",
           phone: "",
           paymentEmail: "",
         },
-        preferences: { defaultRate: "", defaultOtRate: "" },
+        preferences: { defaultRate: "", defaultOtRate: "", invoiceType: "hours", honorariumPaymentEmail: "" },
         bannerDismissed: false,
       };
     }
@@ -51,6 +60,8 @@
       lastInvoiceNumber: raw.lastInvoiceNumber || "",
       employers: Array.isArray(raw.employers) ? raw.employers : [],
       invoices: Array.isArray(raw.invoices) ? raw.invoices : [],
+      artists: Array.isArray(raw.artists) ? raw.artists : [],
+      organizers: Array.isArray(raw.organizers) ? raw.organizers : [],
       profile: {
         name: (raw.profile && raw.profile.name) || "",
         email: (raw.profile && raw.profile.email) || "",
@@ -60,6 +71,8 @@
       preferences: {
         defaultRate: (raw.preferences && raw.preferences.defaultRate) || "",
         defaultOtRate: (raw.preferences && raw.preferences.defaultOtRate) || "",
+        invoiceType: raw.preferences && raw.preferences.invoiceType === "honorarium" ? "honorarium" : "hours",
+        honorariumPaymentEmail: (raw.preferences && raw.preferences.honorariumPaymentEmail) || "",
       },
       bannerDismissed: Boolean(raw.bannerDismissed),
     };
@@ -90,6 +103,7 @@
     serializeState: serializeState,
     deserializeState: deserializeState,
     rememberEmployer: rememberEmployer,
+    rememberArtist: rememberEmployer,
     upsertInvoice: upsertInvoice,
   };
 });

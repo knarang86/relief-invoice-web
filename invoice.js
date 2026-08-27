@@ -107,7 +107,63 @@
     return roundMoney(Number(hours || 0) * Number(rate || 0));
   }
 
+  function artistNames(invoice) {
+    var from = (invoice && invoice.from) || {};
+    if (Array.isArray(from.artists) && from.artists.length) {
+      return from.artists
+        .map(function (name) {
+          return String(name || "").trim();
+        })
+        .filter(Boolean);
+    }
+    if (from.name) {
+      return String(from.name)
+        .split(",")
+        .map(function (name) {
+          return name.trim();
+        })
+        .filter(Boolean);
+    }
+    return [];
+  }
+
+  function formatHonorariumLabel(honorarium) {
+    var event = honorarium || {};
+    var title = String(event.event || "").trim() || "Artist honorarium";
+    var dateLabel = formatDate(event.eventDate);
+    if (dateLabel) return title + " (" + dateLabel + ")";
+    return title;
+  }
+
+  function summarizeHonorarium(invoice) {
+    var event = (invoice && invoice.honorarium) || {};
+    var amount = roundMoney(event.amount || 0);
+    var lines = [];
+    if (amount > 0 || event.event || event.eventDate) {
+      lines.push({
+        label: formatHonorariumLabel(event),
+        amount: amount,
+        taxIncluded: true,
+        kind: "honorarium",
+      });
+    }
+    return {
+      type: "honorarium",
+      lines: lines,
+      subtotal: amount,
+      total: amount,
+      workPeriod: formatDate(event.eventDate),
+      currency: (invoice && invoice.currency) || "CAD",
+      taxIncluded: true,
+      artists: artistNames(invoice),
+    };
+  }
+
   function summarizeInvoice(invoice) {
+    if (invoice && invoice.type === "honorarium") {
+      return summarizeHonorarium(invoice);
+    }
+
     var shifts = Array.isArray(invoice && invoice.shifts) ? invoice.shifts : [];
     var lines = [];
     var regularHours = 0;
@@ -148,11 +204,13 @@
     }
 
     return {
+      type: "hours",
       lines: lines,
       subtotal: subtotal,
       total: subtotal,
       workPeriod: formatWorkPeriod(shifts),
       currency: (invoice && invoice.currency) || "CAD",
+      taxIncluded: false,
     };
   }
 
@@ -170,6 +228,8 @@
     formatMoney: formatMoney,
     formatDate: formatDate,
     formatWorkPeriod: formatWorkPeriod,
+    formatHonorariumLabel: formatHonorariumLabel,
+    artistNames: artistNames,
     nextInvoiceNumber: nextInvoiceNumber,
     lineAmount: lineAmount,
     summarizeInvoice: summarizeInvoice,
