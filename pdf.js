@@ -12,11 +12,14 @@
     throw new Error("PDF library failed to load.");
   }
 
-  function paymentInstruction(from) {
-    if (root.InvoiceConfig && root.InvoiceConfig.paymentInstruction) {
-      return root.InvoiceConfig.paymentInstruction();
+  function paymentInstruction(from, invoice) {
+    var payTo = from && (from.paymentEmail || from.email);
+    if (invoice && invoice.type === "honorarium") {
+      return payTo ? "Cheque or e-transfer to " + payTo : "";
     }
-    var payTo = (from && (from.paymentEmail || from.email)) || "";
+    if (root.InvoiceConfig && root.InvoiceConfig.paymentInstruction) {
+      return root.InvoiceConfig.paymentInstruction(payTo);
+    }
     return payTo ? "Cheque or e-transfer to " + payTo : "";
   }
 
@@ -68,9 +71,16 @@
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
     doc.setTextColor(INK[0], INK[1], INK[2]);
-    doc.text(from.name || "", margin, y);
-    doc.text(to.name || "", billToX, y);
-    y += 6;
+    var fromNameWidth = billToX - margin - 6;
+    var toNameWidth = right - billToX;
+    var fromNameLines = doc.splitTextToSize(from.name || "", fromNameWidth);
+    var toNameLines = doc.splitTextToSize(to.name || "", toNameWidth);
+    var nameLines = Math.max(fromNameLines.length, toNameLines.length, 1);
+    for (i = 0; i < nameLines; i += 1) {
+      if (fromNameLines[i]) doc.text(String(fromNameLines[i]), margin, y);
+      if (toNameLines[i]) doc.text(String(toNameLines[i]), billToX, y);
+      y += 6;
+    }
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
@@ -89,18 +99,22 @@
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
       doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
-      doc.text("Work Period: " + summary.workPeriod, margin, y);
+      var periodLabel = summary.type === "honorarium" ? "Event date: " : "Work Period: ";
+      doc.text(periodLabel + summary.workPeriod, margin, y);
       y += 8;
     } else {
       y += 4;
     }
 
+    var isHonorarium = summary.type === "honorarium";
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8);
     doc.setTextColor(TEAL[0], TEAL[1], TEAL[2]);
     doc.text("DESCRIPTION", margin, y);
-    doc.text("HOURS", 118, y, { align: "right" });
-    doc.text("RATE", 148, y, { align: "right" });
+    if (!isHonorarium) {
+      doc.text("HOURS", 118, y, { align: "right" });
+      doc.text("RATE", 148, y, { align: "right" });
+    }
     doc.text("AMOUNT", right, y, { align: "right" });
     y += 3;
     drawLine(doc, margin, y, right, y);
@@ -111,17 +125,20 @@
     doc.setTextColor(INK[0], INK[1], INK[2]);
 
     if (summary.lines.length === 0) {
-      doc.text("No hours entered", margin, y);
+      doc.text(isHonorarium ? "No honorarium entered" : "No hours entered", margin, y);
       y += 8;
     }
 
     for (i = 0; i < summary.lines.length; i += 1) {
       var item = summary.lines[i];
-      doc.text(item.label, margin, y);
-      doc.text(item.hours.toFixed(2), 118, y, { align: "right" });
-      doc.text(root.Invoice.formatMoney(item.rate, summary.currency) + "/hr", 148, y, { align: "right" });
+      var labelLines = doc.splitTextToSize(item.label, isHonorarium ? 140 : 90);
+      doc.text(labelLines, margin, y);
+      if (!isHonorarium) {
+        doc.text(Number(item.hours || 0).toFixed(2), 118, y, { align: "right" });
+        doc.text(root.Invoice.formatMoney(item.rate, summary.currency) + "/hr", 148, y, { align: "right" });
+      }
       doc.text(root.Invoice.formatMoney(item.amount, summary.currency), right, y, { align: "right" });
-      y += 7;
+      y += Math.max(7, labelLines.length * 5 + 2);
     }
 
     y += 2;
@@ -133,7 +150,16 @@
     doc.setTextColor(INK[0], INK[1], INK[2]);
     doc.text("Total Due", 118, y);
     doc.text(root.Invoice.formatMoney(summary.total, summary.currency), right, y, { align: "right" });
-    y += 14;
+    y += 8;
+    if (isHonorarium || summary.taxIncluded) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+      doc.text("This amount includes taxes.", 118, y);
+      y += 10;
+    } else {
+      y += 6;
+    }
 
     if (invoice.notes) {
       doc.setFont("helvetica", "bold");
@@ -149,7 +175,7 @@
       y += notes.length * 5 + 8;
     }
 
-    var payLine = paymentInstruction(from);
+    var payLine = paymentInstruction(from, invoice);
     if (payLine) {
       doc.setFillColor(TEAL_SOFT[0], TEAL_SOFT[1], TEAL_SOFT[2]);
       doc.roundedRect(margin, y, pageWidth - margin * 2, 16, 2, 2, "F");
