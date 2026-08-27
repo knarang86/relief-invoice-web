@@ -7,15 +7,18 @@
   var state = {
     lastInvoiceNumber: "",
     employers: [],
+    organizers: [],
+    artists: [],
     invoices: [],
     profile: Object.assign({}, Config.PROFILE),
-    preferences: { defaultRate: "", defaultOtRate: "" },
+    preferences: { defaultRate: "", defaultOtRate: "", invoiceType: "hours", honorariumPaymentEmail: "" },
     bannerDismissed: false,
     current: emptyDraft(),
   };
 
   function emptyDraft() {
     return {
+      type: "hours",
       invoiceNumber: "",
       issuedDate: todayIso(),
       employer: "",
@@ -24,6 +27,18 @@
       otHours: "",
       otRate: "",
       notes: "",
+      honorarium: defaultHonorarium(),
+    };
+  }
+
+  function defaultHonorarium() {
+    return {
+      event: "",
+      eventDate: todayIso(),
+      amount: "",
+      organizer: "",
+      organizerContact: "",
+      artists: [""],
     };
   }
 
@@ -143,7 +158,31 @@
     state.preferences = {
       defaultRate: $("s-rate").value.trim(),
       defaultOtRate: $("s-otRate").value.trim(),
+      invoiceType: state.preferences.invoiceType === "honorarium" ? "honorarium" : "hours",
+      honorariumPaymentEmail: state.preferences.honorariumPaymentEmail || "",
     };
+  }
+
+  function honorariumDraft() {
+    if (!state.current.honorarium) state.current.honorarium = defaultHonorarium();
+    if (!Array.isArray(state.current.honorarium.artists) || !state.current.honorarium.artists.length) {
+      state.current.honorarium.artists = [""];
+    }
+    return state.current.honorarium;
+  }
+
+  function setInvoiceType(type) {
+    var next = type === "honorarium" ? "honorarium" : "hours";
+    state.current.type = next;
+    state.preferences.invoiceType = next;
+    $("hours-flow").classList.toggle("hidden", next !== "hours");
+    $("honorarium-flow").classList.toggle("hidden", next !== "honorarium");
+    $("type-hours").classList.toggle("active", next === "hours");
+    $("type-honorarium").classList.toggle("active", next === "honorarium");
+  }
+
+  function currentType() {
+    return state.current.type === "honorarium" ? "honorarium" : "hours";
   }
 
   function defaultRate() {
@@ -196,6 +235,65 @@
     });
   }
 
+  function renderArtists() {
+    var box = $("artists");
+    var draft = honorariumDraft();
+    box.innerHTML = "";
+    draft.artists.forEach(function (name, index) {
+      var row = document.createElement("div");
+      row.className = "row artist-row";
+      row.innerHTML =
+        '<div class="artist-name"><span class="field-label">Artist</span><input data-field="name" value="' +
+        escapeHtml(name || "") +
+        '" placeholder="Name on the invoice"></div>' +
+        '<button type="button" class="remove" aria-label="Remove artist">✕</button>';
+      row.querySelector("input").addEventListener("input", function () {
+        honorariumDraft().artists[index] = this.value;
+        updateTotal();
+      });
+      row.querySelector(".remove").addEventListener("click", function () {
+        if (honorariumDraft().artists.length === 1) {
+          honorariumDraft().artists[0] = "";
+        } else {
+          honorariumDraft().artists.splice(index, 1);
+        }
+        renderArtists();
+        updateTotal();
+      });
+      box.appendChild(row);
+    });
+  }
+
+  function renderNameChips(boxId, names, onPick) {
+    var box = $(boxId);
+    box.innerHTML = "";
+    (names || []).forEach(function (name) {
+      var chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "chip";
+      chip.textContent = name;
+      chip.addEventListener("click", function () {
+        onPick(name);
+      });
+      box.appendChild(chip);
+    });
+  }
+
+  function addArtistName(name) {
+    if (!name) return;
+    var artists = honorariumDraft().artists;
+    var emptyIndex = -1;
+    var i;
+    for (i = 0; i < artists.length; i += 1) {
+      if (artists[i] === name) return;
+      if (emptyIndex < 0 && !String(artists[i] || "").trim()) emptyIndex = i;
+    }
+    if (emptyIndex >= 0) artists[emptyIndex] = name;
+    else artists.push(name);
+    renderArtists();
+    updateTotal();
+  }
+
   function renderEmployers() {
     var box = $("employers");
     box.innerHTML = "";
@@ -211,6 +309,18 @@
       });
       box.appendChild(chip);
     });
+  }
+
+  function renderOrganizers() {
+    renderNameChips("organizers", state.organizers, function (name) {
+      $("h-organizer").value = name;
+      honorariumDraft().organizer = name;
+      updateTotal();
+    });
+  }
+
+  function renderArtistChips() {
+    renderNameChips("artist-chips", state.artists, addArtistName);
   }
 
   function renderRecent() {
@@ -242,17 +352,64 @@
   }
 
   function collectDraft() {
+    state.current.notes = $("notes").value.trim();
+    if (currentType() === "honorarium") {
+      var draft = honorariumDraft();
+      draft.event = $("h-event").value.trim();
+      draft.eventDate = $("h-eventDate").value || todayIso();
+      draft.amount = $("h-amount").value.trim();
+      draft.organizer = $("h-organizer").value.trim();
+      draft.organizerContact = $("h-organizerContact").value.trim();
+      state.current.issuedDate = $("h-issuedDate").value || todayIso();
+      state.preferences.honorariumPaymentEmail = $("h-payEmail").value.trim();
+      return;
+    }
     state.current.employer = $("employer").value.trim();
     state.current.employerAddress = $("employerAddress").value.trim();
     state.current.issuedDate = $("issuedDate").value || todayIso();
-    state.current.notes = $("notes").value.trim();
     state.current.otHours = $("otHours").value.trim();
     state.current.otRate = $("otRate").value.trim();
     state.current.rate = $("rate").value.trim();
   }
 
+  function honorariumArtists() {
+    return honorariumDraft()
+      .artists.map(function (name) {
+        return String(name || "").trim();
+      })
+      .filter(Boolean);
+  }
+
   function buildInvoiceFromDraft() {
     collectDraft();
+    if (currentType() === "honorarium") {
+      var draft = honorariumDraft();
+      var artists = honorariumArtists();
+      var payEmail = state.preferences.honorariumPaymentEmail || "";
+      return {
+        type: "honorarium",
+        invoiceNumber: state.current.invoiceNumber || Invoice.nextInvoiceNumber(state.lastInvoiceNumber),
+        issuedDate: state.current.issuedDate,
+        currency: "CAD",
+        from: {
+          name: artists.join(", "),
+          artists: artists,
+          email: payEmail,
+          paymentEmail: payEmail,
+        },
+        to: {
+          name: draft.organizer,
+          address: draft.organizerContact,
+        },
+        honorarium: {
+          event: draft.event,
+          eventDate: draft.eventDate,
+          amount: Number(draft.amount || 0),
+          taxIncluded: true,
+        },
+        notes: state.current.notes,
+      };
+    }
     var rate = Number(state.current.rate || defaultRate() || 0);
     var shifts = state.current.shifts
       .map(function (shift) {
@@ -275,6 +432,7 @@
     }
 
     return {
+      type: "hours",
       invoiceNumber: state.current.invoiceNumber || Invoice.nextInvoiceNumber(state.lastInvoiceNumber),
       issuedDate: state.current.issuedDate,
       currency: "CAD",
@@ -293,10 +451,19 @@
     var invoice = buildInvoiceFromDraft();
     var summary = Invoice.summarizeInvoice(invoice);
     $("live-total").textContent = Invoice.formatMoney(summary.total, summary.currency);
-    $("preview-btn").disabled = !state.current.employer || summary.lines.length === 0;
+    var blocked;
+    if (currentType() === "honorarium") {
+      blocked =
+        !invoice.to.name || !honorariumArtists().length || Number(honorariumDraft().amount || 0) <= 0;
+    } else {
+      blocked = !state.current.employer || summary.lines.length === 0;
+    }
+    $("preview-btn").classList.toggle("is-disabled", blocked);
+    $("preview-btn").setAttribute("aria-disabled", blocked ? "true" : "false");
   }
 
   function fillEditor() {
+    setInvoiceType(state.current.type || state.preferences.invoiceType || "hours");
     $("employer").value = state.current.employer;
     $("employerAddress").value = state.current.employerAddress;
     $("issuedDate").value = state.current.issuedDate || todayIso();
@@ -304,8 +471,19 @@
     $("otHours").value = state.current.otHours;
     $("otRate").value = state.current.otRate || state.preferences.defaultOtRate || "";
     $("notes").value = state.current.notes;
+    var draft = honorariumDraft();
+    $("h-event").value = draft.event || "";
+    $("h-eventDate").value = draft.eventDate || todayIso();
+    $("h-amount").value = draft.amount || "";
+    $("h-organizer").value = draft.organizer || "";
+    $("h-organizerContact").value = draft.organizerContact || "";
+    $("h-issuedDate").value = state.current.issuedDate || todayIso();
+    $("h-payEmail").value = state.preferences.honorariumPaymentEmail || "";
     renderShifts();
+    renderArtists();
     renderEmployers();
+    renderOrganizers();
+    renderArtistChips();
     renderRecent();
     updateTotal();
     $("home-banner").classList.toggle("hidden", state.bannerDismissed || window.navigator.standalone === true);
@@ -315,8 +493,18 @@
     var summary = Invoice.summarizeInvoice(invoice);
     var from = invoice.from || {};
     var to = invoice.to || {};
+    var isHonorarium = summary.type === "honorarium";
     var rows = summary.lines
       .map(function (line) {
+        if (isHonorarium) {
+          return (
+            "<tr><td>" +
+            escapeHtml(line.label) +
+            '</td><td class="num">' +
+            escapeHtml(Invoice.formatMoney(line.amount, summary.currency)) +
+            "</td></tr>"
+          );
+        }
         return (
           "<tr><td>" +
           escapeHtml(line.label) +
@@ -333,8 +521,23 @@
       .join("");
 
     var fromDetails = [from.email, from.phone].filter(Boolean).map(escapeHtml).join("<br>");
-    var workPeriod = summary.workPeriod
-      ? '<p class="preview-work-period">Work Period: ' + escapeHtml(summary.workPeriod) + "</p>"
+    var period = "";
+    if (summary.workPeriod) {
+      period =
+        '<p class="preview-work-period">' +
+        (isHonorarium ? "Event date: " : "Work Period: ") +
+        escapeHtml(summary.workPeriod) +
+        "</p>";
+    }
+
+    var tableHead = isHonorarium
+      ? '<table class="lines"><thead><tr><th>Description</th><th class="num">Amount</th></tr></thead><tbody>'
+      : '<table class="lines"><thead><tr><th>Description</th><th class="num">Hours</th><th class="num">Rate</th><th class="num">Amount</th></tr></thead><tbody>';
+
+    var taxNote = isHonorarium || summary.taxIncluded ? '<p class="tax-note">This amount includes taxes.</p>' : "";
+    var payTo = isHonorarium ? from.paymentEmail || from.email : senderProfile().paymentEmail || Config.PROFILE.paymentEmail;
+    var payBox = Config.paymentInstruction(payTo)
+      ? '<div class="pay-box">Payment Method: ' + escapeHtml(Config.paymentInstruction(payTo)) + "</div>"
       : "";
 
     $("preview-doc").innerHTML =
@@ -355,15 +558,17 @@
       "</strong><div class='muted'>" +
       escapeHtml(to.address || "") +
       "</div></div></div>" +
-      workPeriod +
-      '<table class="lines"><thead><tr><th>Description</th><th class="num">Hours</th><th class="num">Rate</th><th class="num">Amount</th></tr></thead><tbody>' +
+      period +
+      tableHead +
       rows +
       "</tbody></table>" +
       '<div class="totals"><div class="total-due"><strong>Total Due</strong><strong>' +
       escapeHtml(Invoice.formatMoney(summary.total, summary.currency)) +
-      "</strong></div></div>" +
+      "</strong></div>" +
+      taxNote +
+      "</div>" +
       (invoice.notes ? "<p class='preview-notes'><strong>Notes</strong><br>" + escapeHtml(invoice.notes) + "</p>" : "") +
-      '<div class="pay-box">Payment Method: ' + escapeHtml(Config.paymentInstruction()) + "</div>";
+      payBox;
   }
 
   function escapeHtml(value) {
@@ -377,7 +582,14 @@
   function saveInvoice(invoice) {
     state.lastInvoiceNumber = invoice.invoiceNumber;
     state.invoices = Storage.upsertInvoice(state.invoices, invoice);
-    state.employers = Storage.rememberEmployer(state.employers, invoice.to && invoice.to.name);
+    if (invoice.type === "honorarium") {
+      (invoice.from && invoice.from.artists ? invoice.from.artists : []).forEach(function (name) {
+        state.artists = Storage.rememberArtist(state.artists, name, Config.ARTIST_CHIP_LIMIT);
+      });
+      state.organizers = Storage.rememberEmployer(state.organizers, invoice.to && invoice.to.name);
+    } else {
+      state.employers = Storage.rememberEmployer(state.employers, invoice.to && invoice.to.name);
+    }
     persist();
   }
 
@@ -431,7 +643,9 @@
   }
 
   function startNew() {
+    var type = state.preferences.invoiceType === "honorarium" ? "honorarium" : "hours";
     state.current = emptyDraft();
+    state.current.type = type;
     state.current.rate = defaultRate();
     state.current.invoiceNumber = Invoice.nextInvoiceNumber(state.lastInvoiceNumber);
     fillEditor();
@@ -453,19 +667,47 @@
     $("tab-invoice").addEventListener("click", goToEditor);
     $("tab-details").addEventListener("click", goToSetup);
 
+    $("type-hours").addEventListener("click", function () {
+      setInvoiceType("hours");
+      updateTotal();
+      persist();
+    });
+    $("type-honorarium").addEventListener("click", function () {
+      setInvoiceType("honorarium");
+      updateTotal();
+      persist();
+    });
+
     $("add-shift").addEventListener("click", function () {
       state.current.shifts.push({ date: nextShiftDate(), hours: "8", rate: defaultRate() });
       renderShifts();
       updateTotal();
     });
 
-    ["employer", "employerAddress", "issuedDate", "rate", "otHours", "otRate", "notes"].forEach(function (id) {
-      $(id).addEventListener("input", updateTotal);
+    $("add-artist").addEventListener("click", function () {
+      honorariumDraft().artists.push("");
+      renderArtists();
+      updateTotal();
     });
+
+    function onEditorFieldEvent(event) {
+      var tag = event.target && event.target.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") updateTotal();
+    }
+    $("editor").addEventListener("input", onEditorFieldEvent);
+    $("editor").addEventListener("change", onEditorFieldEvent);
+    $("editor").addEventListener("focusout", onEditorFieldEvent);
 
     $("preview-btn").addEventListener("click", function () {
       var invoice = buildInvoiceFromDraft();
-      if (!invoice.to.name) return;
+      var summary = Invoice.summarizeInvoice(invoice);
+      if (currentType() === "honorarium") {
+        if (!honorariumArtists().length || !invoice.to.name || Number(honorariumDraft().amount || 0) <= 0) {
+          return;
+        }
+      } else if (!invoice.to.name || summary.lines.length === 0) {
+        return;
+      }
       state.current.invoiceNumber = invoice.invoiceNumber;
       state.previewInvoice = invoice;
       saveInvoice(invoice);
