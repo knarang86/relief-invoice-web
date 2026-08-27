@@ -102,6 +102,16 @@ button,
   color: var(--teal-dark);
 }
 
+.type-tabs {
+  width: 100%;
+  margin-bottom: 14px;
+  justify-content: stretch;
+}
+
+.type-tabs .view-tab {
+  flex: 1;
+}
+
 .card {
   background: var(--card);
   border-radius: var(--radius);
@@ -203,6 +213,11 @@ textarea {
   margin-bottom: 0;
 }
 
+.artist-row .artist-name {
+  flex: 1 1 0;
+  overflow: hidden;
+}
+
 .remove {
   border: 0;
   background: transparent;
@@ -249,7 +264,8 @@ textarea {
   color: #fff;
 }
 
-.primary:disabled {
+.primary:disabled,
+.primary.is-disabled {
   opacity: 0.45;
 }
 
@@ -387,6 +403,12 @@ textarea {
   justify-content: space-between;
   align-items: baseline;
   font-size: 1.1rem;
+}
+
+.tax-note {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.86rem;
 }
 
 .pay-box {
