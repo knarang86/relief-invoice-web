@@ -28,7 +28,7 @@
       <section id="setup" class="hidden">
         <div class="card">
           <h2>Your details</h2>
-          <p class="hint">Saved on this phone. These appear on every invoice and can be edited any time.</p>
+          <p class="hint">Saved on this phone. These appear on Hours invoices (pharmacy work) and can be edited any time.</p>
           <p class="error" id="setup-error"></p>
           <label for="s-name">Your name</label>
           <input id="s-name" autocomplete="name" />
@@ -52,37 +52,77 @@
           <button type="button" id="dismiss-banner">OK</button>
         </div>
 
-        <div class="card">
-          <h2>Who is this for?</h2>
-          <label for="employer">Pharmacy / employer</label>
-          <input id="employer" placeholder="Shoppers, Costco, hospital name…" />
-          <div class="chips" id="employers"></div>
-          <label for="employerAddress">Their address (optional)</label>
-          <input id="employerAddress" placeholder="Street, city… appears on invoice" />
-          <label for="issuedDate">Invoice date</label>
-          <input id="issuedDate" type="date" />
+        <nav class="view-tabs type-tabs" id="type-tabs" aria-label="Invoice type">
+          <button class="view-tab active" id="type-hours" type="button" data-type="hours">Hours</button>
+          <button class="view-tab" id="type-honorarium" type="button" data-type="honorarium">Honorarium</button>
+        </nav>
+
+        <div id="hours-flow">
+          <div class="card">
+            <h2>Who is this for?</h2>
+            <label for="employer">Pharmacy / employer</label>
+            <input id="employer" placeholder="Shoppers, Costco, hospital name…" />
+            <div class="chips" id="employers"></div>
+            <label for="employerAddress">Their address (optional)</label>
+            <input id="employerAddress" placeholder="Street, city… appears on invoice" />
+            <label for="issuedDate">Invoice date</label>
+            <input id="issuedDate" type="date" />
+          </div>
+
+          <div class="card">
+            <h2>Hours</h2>
+            <p class="hint">Add each day you worked. Rate is the same for all regular hours.</p>
+            <label for="rate">Hourly rate</label>
+            <input id="rate" inputmode="decimal" />
+            <div id="shifts"></div>
+            <button class="secondary" id="add-shift" type="button">Add another day</button>
+          </div>
+
+          <div class="card">
+            <h2>Overtime (optional)</h2>
+            <label for="otHours">Overtime hours</label>
+            <input id="otHours" inputmode="decimal" placeholder="0" />
+            <label for="otRate">Overtime rate</label>
+            <input id="otRate" inputmode="decimal" placeholder="Leave blank to use 1.5×" />
+          </div>
         </div>
 
-        <div class="card">
-          <h2>Hours</h2>
-          <p class="hint">Add each day you worked. Rate is the same for all regular hours.</p>
-          <label for="rate">Hourly rate</label>
-          <input id="rate" inputmode="decimal" />
-          <div id="shifts"></div>
-          <button class="secondary" id="add-shift" type="button">Add another day</button>
-        </div>
+        <div id="honorarium-flow" class="hidden">
+          <div class="card">
+            <h2>Artists on this invoice</h2>
+            <p class="hint">These names appear under FROM. Add everyone who performed — one invoice for the group.</p>
+            <div class="chips" id="artist-chips"></div>
+            <div id="artists"></div>
+            <button class="secondary" id="add-artist" type="button">Add another artist</button>
+            <label for="h-payEmail">Payment email (optional)</label>
+            <input id="h-payEmail" type="email" placeholder="e-transfer address on the invoice" />
+          </div>
 
-        <div class="card">
-          <h2>Overtime (optional)</h2>
-          <label for="otHours">Overtime hours</label>
-          <input id="otHours" inputmode="decimal" placeholder="0" />
-          <label for="otRate">Overtime rate</label>
-          <input id="otRate" inputmode="decimal" placeholder="Leave blank to use 1.5×" />
+          <div class="card">
+            <h2>Event</h2>
+            <label for="h-event">Event / description</label>
+            <input id="h-event" placeholder="Colour Fest 2026" />
+            <label for="h-eventDate">Event date</label>
+            <input id="h-eventDate" type="date" />
+            <label for="h-amount">Total (tax included)</label>
+            <input id="h-amount" inputmode="decimal" placeholder="125" />
+          </div>
+
+          <div class="card">
+            <h2>Who is this for?</h2>
+            <label for="h-organizer">Organizer / bill to</label>
+            <input id="h-organizer" placeholder="Diwali Fest, Colour Fest…" />
+            <div class="chips" id="organizers"></div>
+            <label for="h-organizerContact">Their email or address</label>
+            <input id="h-organizerContact" placeholder="admin@diwalifest.ca" />
+            <label for="h-issuedDate">Invoice date</label>
+            <input id="h-issuedDate" type="date" />
+          </div>
         </div>
 
         <div class="card">
           <h2>Notes (optional)</h2>
-          <textarea id="notes" placeholder="Coverage dates, PO number, extra context…"></textarea>
+          <textarea id="notes" placeholder="Coverage dates, PO number, due date, extra context…"></textarea>
         </div>
 
         <div class="card hidden" id="recent-wrap">

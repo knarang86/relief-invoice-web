@@ -18,9 +18,11 @@
     PROFILE: PROFILE,
     RECENT_INVOICE_LIMIT: 12,
     EMPLOYER_CHIP_LIMIT: 8,
+    ARTIST_CHIP_LIMIT: 12,
     STORAGE_KEY: "relief-invoice-v2",
-    paymentInstruction: function () {
-      return "Cheque or e-transfer to " + PROFILE.paymentEmail;
+    paymentInstruction: function (email) {
+      var payTo = email || PROFILE.paymentEmail;
+      return payTo ? "Cheque or e-transfer to " + payTo : "";
     },
   };
 });
