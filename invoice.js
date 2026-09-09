@@ -84,7 +84,7 @@
         last.getFullYear()
       );
     }
-    return formatDate(dateToIso(first)) + " – " + formatDate(dateToIso(last));
+    return formatDate(dateToIso(first)) + " \u2013 " + formatDate(dateToIso(last));
   }
 
   function padInvoiceSeq(seq) {
@@ -170,6 +170,8 @@
     var regularRate = 0;
     var i;
 
+    var showDailyHours = Boolean(invoice && invoice.showDailyHours);
+
     for (i = 0; i < shifts.length; i += 1) {
       var shift = shifts[i];
       var hours = Number(shift.hours || 0);
@@ -177,9 +179,18 @@
       if (!shift.date && hours <= 0) continue;
       regularHours = roundMoney(regularHours + hours);
       if (rate > 0) regularRate = rate;
+      if (showDailyHours) {
+        lines.push({
+          label: formatDate(shift.date) || "Hours",
+          hours: hours,
+          rate: rate,
+          amount: lineAmount(hours, rate),
+          kind: "day",
+        });
+      }
     }
 
-    if (regularHours > 0) {
+    if (!showDailyHours && regularHours > 0) {
       lines.push({
         label: "Regular Hours",
         hours: regularHours,
@@ -211,6 +222,7 @@
       workPeriod: formatWorkPeriod(shifts),
       currency: (invoice && invoice.currency) || "CAD",
       taxIncluded: false,
+      showDailyHours: showDailyHours,
     };
   }
 

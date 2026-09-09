@@ -132,4 +132,47 @@ test("old saved state without honorarium fields still loads as hours", () => {
   assert.equal(loaded.preferences.invoiceType, "hours");
   assert.deepEqual(loaded.artists, []);
   assert.deepEqual(loaded.organizers, []);
+  assert.equal(loaded.preferences.showDailyHours, true);
+});
+
+test("daily hours option lists each worked day without changing the total", () => {
+  const invoice = {
+    type: "hours",
+    showDailyHours: true,
+    shifts: [
+      { date: "2026-08-10", hours: 8, rate: 65 },
+      { date: "2026-08-11", hours: 6.5, rate: 65 },
+    ],
+  };
+  const rolled = Invoice.summarizeInvoice(Object.assign({}, invoice, { showDailyHours: false }));
+  const daily = Invoice.summarizeInvoice(invoice);
+  assert.equal(daily.lines.length, 2);
+  assert.equal(daily.lines[0].label, "August 10, 2026");
+  assert.equal(daily.lines[0].hours, 8);
+  assert.equal(daily.lines[1].hours, 6.5);
+  assert.equal(daily.total, rolled.total);
+  assert.equal(daily.total, 942.5);
+});
+
+test("turning daily hours off keeps a single Regular Hours line", () => {
+  const summary = Invoice.summarizeInvoice({
+    type: "hours",
+    showDailyHours: false,
+    shifts: [
+      { date: "2026-08-10", hours: 8, rate: 65 },
+      { date: "2026-08-11", hours: 8, rate: 65 },
+    ],
+  });
+  assert.equal(summary.lines.length, 1);
+  assert.equal(summary.lines[0].label, "Regular Hours");
+  assert.equal(summary.lines[0].hours, 16);
+});
+
+test("storage remembers the daily hours preference when turned off", () => {
+  const saved = Storage.serializeState({
+    preferences: { showDailyHours: false },
+    profile: {},
+  });
+  const loaded = Storage.deserializeState(saved);
+  assert.equal(loaded.preferences.showDailyHours, false);
 });

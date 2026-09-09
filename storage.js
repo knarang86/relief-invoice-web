@@ -32,6 +32,7 @@
           state.preferences && state.preferences.honorariumPaymentEmail
             ? state.preferences.honorariumPaymentEmail
             : "",
+        showDailyHours: !state.preferences || state.preferences.showDailyHours !== false,
       },
       bannerDismissed: Boolean(state.bannerDismissed),
     };
@@ -51,7 +52,13 @@
           phone: "",
           paymentEmail: "",
         },
-        preferences: { defaultRate: "", defaultOtRate: "", invoiceType: "hours", honorariumPaymentEmail: "" },
+        preferences: {
+          defaultRate: "",
+          defaultOtRate: "",
+          invoiceType: "hours",
+          honorariumPaymentEmail: "",
+          showDailyHours: true,
+        },
         bannerDismissed: false,
       };
     }
@@ -73,6 +80,7 @@
         defaultOtRate: (raw.preferences && raw.preferences.defaultOtRate) || "",
         invoiceType: raw.preferences && raw.preferences.invoiceType === "honorarium" ? "honorarium" : "hours",
         honorariumPaymentEmail: (raw.preferences && raw.preferences.honorariumPaymentEmail) || "",
+        showDailyHours: !raw.preferences || raw.preferences.showDailyHours !== false,
       },
       bannerDismissed: Boolean(raw.bannerDismissed),
     };
