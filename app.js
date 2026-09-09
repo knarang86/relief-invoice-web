@@ -347,7 +347,7 @@
       btn.innerHTML =
         "<strong>#" +
         invoice.invoiceNumber +
-        " \u00b7 " +
+        " · " +
         (invoice.to && invoice.to.name ? invoice.to.name : "Invoice") +
         "</strong><div class='muted'>" +
         Invoice.formatMoney(summary.total, summary.currency) +
