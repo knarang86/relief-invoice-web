@@ -30,6 +30,15 @@
     doc.line(x1, y1, x2, y2);
   }
 
+  function ensureSpace(doc, y, needed, pageWidth) {
+    var pageHeight = doc.internal.pageSize.getHeight();
+    if (y + needed < pageHeight - 18) return y;
+    doc.addPage();
+    doc.setFillColor(TEAL[0], TEAL[1], TEAL[2]);
+    doc.rect(0, 0, pageWidth, 8, "F");
+    return 22;
+  }
+
   function drawInvoice(doc, invoice) {
     var summary = root.Invoice.summarizeInvoice(invoice);
     var pageWidth = doc.internal.pageSize.getWidth();
@@ -132,6 +141,10 @@
     for (i = 0; i < summary.lines.length; i += 1) {
       var item = summary.lines[i];
       var labelLines = doc.splitTextToSize(item.label, isHonorarium ? 140 : 90);
+      y = ensureSpace(doc, y, Math.max(7, labelLines.length * 5 + 2), pageWidth);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(INK[0], INK[1], INK[2]);
       doc.text(labelLines, margin, y);
       if (!isHonorarium) {
         doc.text(Number(item.hours || 0).toFixed(2), 118, y, { align: "right" });
