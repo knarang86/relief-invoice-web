@@ -84,7 +84,7 @@
         last.getFullYear()
       );
     }
-    return formatDate(dateToIso(first)) + " \u2013 " + formatDate(dateToIso(last));
+    return formatDate(dateToIso(first)) + " – " + formatDate(dateToIso(last));
   }
 
   function padInvoiceSeq(seq) {
