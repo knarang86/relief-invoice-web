@@ -563,11 +563,11 @@
       "</div></div>" +
       '<div class="cols"><div><h3>FROM</h3><strong>' +
       escapeHtml(from.name || "") +
-      "</strong><div class='muted'>" +
+      '</strong><div class="muted">' +
       fromDetails +
-      "</div></div><div><h3>BILL TO</h3><strong>' +
+      '</div></div><div><h3>BILL TO</h3><strong>' +
       escapeHtml(to.name || "") +
-      "</strong><div class='muted'>" +
+      '</strong><div class="muted">' +
       escapeHtml(to.address || "") +
       "</div></div></div>" +
       period +
