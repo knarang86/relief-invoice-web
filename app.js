@@ -11,7 +11,13 @@
     artists: [],
     invoices: [],
     profile: Object.assign({}, Config.PROFILE),
-    preferences: { defaultRate: "", defaultOtRate: "", invoiceType: "hours", honorariumPaymentEmail: "" },
+    preferences: {
+      defaultRate: "",
+      defaultOtRate: "",
+      invoiceType: "hours",
+      honorariumPaymentEmail: "",
+      showDailyHours: true,
+    },
     bannerDismissed: false,
     current: emptyDraft(),
   };
@@ -27,6 +33,7 @@
       otHours: "",
       otRate: "",
       notes: "",
+      showDailyHours: true,
       honorarium: defaultHonorarium(),
     };
   }
@@ -160,6 +167,7 @@
       defaultOtRate: $("s-otRate").value.trim(),
       invoiceType: state.preferences.invoiceType === "honorarium" ? "honorarium" : "hours",
       honorariumPaymentEmail: state.preferences.honorariumPaymentEmail || "",
+      showDailyHours: state.preferences.showDailyHours !== false,
     };
   }
 
@@ -339,7 +347,7 @@
       btn.innerHTML =
         "<strong>#" +
         invoice.invoiceNumber +
-        " · " +
+        " \u00b7 " +
         (invoice.to && invoice.to.name ? invoice.to.name : "Invoice") +
         "</strong><div class='muted'>" +
         Invoice.formatMoney(summary.total, summary.currency) +
@@ -370,6 +378,8 @@
     state.current.otHours = $("otHours").value.trim();
     state.current.otRate = $("otRate").value.trim();
     state.current.rate = $("rate").value.trim();
+    state.current.showDailyHours = $("show-daily-hours").checked;
+    state.preferences.showDailyHours = state.current.showDailyHours;
   }
 
   function honorariumArtists() {
@@ -443,6 +453,7 @@
       },
       shifts: shifts,
       overtime: overtime,
+      showDailyHours: state.current.showDailyHours !== false,
       notes: state.current.notes,
     };
   }
@@ -470,6 +481,7 @@
     $("rate").value = state.current.rate || defaultRate();
     $("otHours").value = state.current.otHours;
     $("otRate").value = state.current.otRate || state.preferences.defaultOtRate || "";
+    $("show-daily-hours").checked = state.current.showDailyHours !== false;
     $("notes").value = state.current.notes;
     var draft = honorariumDraft();
     $("h-event").value = draft.event || "";
@@ -553,7 +565,7 @@
       escapeHtml(from.name || "") +
       "</strong><div class='muted'>" +
       fromDetails +
-      "</div></div><div><h3>BILL TO</h3><strong>" +
+      "</div></div><div><h3>BILL TO</h3><strong>' +
       escapeHtml(to.name || "") +
       "</strong><div class='muted'>" +
       escapeHtml(to.address || "") +
@@ -647,6 +659,7 @@
     state.current = emptyDraft();
     state.current.type = type;
     state.current.rate = defaultRate();
+    state.current.showDailyHours = state.preferences.showDailyHours !== false;
     state.current.invoiceNumber = Invoice.nextInvoiceNumber(state.lastInvoiceNumber);
     fillEditor();
     show("editor");
@@ -682,6 +695,12 @@
       state.current.shifts.push({ date: nextShiftDate(), hours: "8", rate: defaultRate() });
       renderShifts();
       updateTotal();
+    });
+
+    $("show-daily-hours").addEventListener("change", function () {
+      state.current.showDailyHours = this.checked;
+      state.preferences.showDailyHours = this.checked;
+      persist();
     });
 
     $("add-artist").addEventListener("click", function () {
