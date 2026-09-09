@@ -565,7 +565,7 @@
       escapeHtml(from.name || "") +
       "</strong><div class='muted'>" +
       fromDetails +
-      "</div></div><div><h3>BILL TO</h3><strong>' +
+      "</div></div><div><h3>BILL TO</h3><strong>" +
       escapeHtml(to.name || "") +
       "</strong><div class='muted'>" +
       escapeHtml(to.address || "") +
