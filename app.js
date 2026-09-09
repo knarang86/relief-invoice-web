@@ -521,10 +521,7 @@
           "<tr><td>" +
           escapeHtml(line.label) +
           '</td><td class="num">' +
-          line.hours.toFixed(2) +
-          '</td><td class="num">' +
-          escapeHtml(Invoice.formatMoney(line.rate, summary.currency)) +
-          "/hr" +
+          escapeHtml(Invoice.formatHours(line.hours)) +
           '</td><td class="num">' +
           escapeHtml(Invoice.formatMoney(line.amount, summary.currency)) +
           "</td></tr>"
@@ -542,9 +539,12 @@
         "</p>";
     }
 
+    var dateHead = summary.showDailyHours ? "Date" : "Description";
     var tableHead = isHonorarium
       ? '<table class="lines"><thead><tr><th>Description</th><th class="num">Amount</th></tr></thead><tbody>'
-      : '<table class="lines"><thead><tr><th>Description</th><th class="num">Hours</th><th class="num">Rate</th><th class="num">Amount</th></tr></thead><tbody>';
+      : '<table class="lines"><thead><tr><th>' +
+        dateHead +
+        '</th><th class="num">Hours</th><th class="num">Amount</th></tr></thead><tbody>';
 
     var taxNote = isHonorarium || summary.taxIncluded ? '<p class="tax-note">This amount includes taxes.</p>' : "";
     var payTo = isHonorarium ? from.paymentEmail || from.email : senderProfile().paymentEmail || Config.PROFILE.paymentEmail;
@@ -565,7 +565,7 @@
       escapeHtml(from.name || "") +
       "</strong><div class='muted'>" +
       fromDetails +
-      "</div></div><div><h3>BILL TO</h3><strong>" +
+      "</div></div><div><h3>BILL TO</h3><strong>' +
       escapeHtml(to.name || "") +
       "</strong><div class='muted'>" +
       escapeHtml(to.address || "") +
@@ -574,7 +574,9 @@
       tableHead +
       rows +
       "</tbody></table>" +
-      '<div class="totals"><div class="total-due"><strong>Total Due</strong><strong>' +
+      '<div class="totals"><div class="total-due"><strong>' +
+      escapeHtml(isHonorarium ? "Total Due" : summary.totalLabel || "Total Due") +
+      "</strong><strong>" +
       escapeHtml(Invoice.formatMoney(summary.total, summary.currency)) +
       "</strong></div>" +
       taxNote +
