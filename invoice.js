@@ -51,6 +51,51 @@
     });
   }
 
+  function formatDayLabel(iso) {
+    var date = parseLocalDate(iso);
+    if (!date) return "Hours";
+    var months = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sept",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+    return months[date.getMonth()] + " " + date.getDate();
+  }
+
+  function formatHours(value) {
+    var n = Number(value || 0);
+    if (!isFinite(n)) n = 0;
+    var rounded = roundMoney(n);
+    if (rounded === Math.round(rounded)) return String(Math.round(rounded));
+    return String(rounded);
+  }
+
+  function formatHoursTotal(summary) {
+    var bits = [];
+    var currency = (summary && summary.currency) || "CAD";
+    if (summary && Number(summary.regularHours) > 0) {
+      bits.push(
+        formatHours(summary.regularHours) + " × " + formatMoney(summary.regularRate, currency)
+      );
+    }
+    if (summary && Number(summary.overtimeHours) > 0) {
+      bits.push(
+        formatHours(summary.overtimeHours) + " × " + formatMoney(summary.overtimeRate, currency)
+      );
+    }
+    if (!bits.length) return "Total Due";
+    return "Total " + bits.join(" + ");
+  }
+
   function formatWorkPeriod(shifts) {
     var dates = [];
     var seen = {};
@@ -181,7 +226,7 @@
       if (rate > 0) regularRate = rate;
       if (showDailyHours) {
         lines.push({
-          label: formatDate(shift.date) || "Hours",
+          label: formatDayLabel(shift.date),
           hours: hours,
           rate: rate,
           amount: lineAmount(hours, rate),
@@ -200,12 +245,17 @@
     }
 
     var overtime = invoice && invoice.overtime;
+    var overtimeHours = 0;
+    var overtimeRate = 0;
     if (overtime && Number(overtime.hours) > 0) {
+      overtimeHours = Number(overtime.hours);
+      overtimeRate = Number(overtime.rate || 0);
       lines.push({
-        label: "Overtime Hours",
-        hours: Number(overtime.hours),
-        rate: Number(overtime.rate || 0),
+        label: "Overtime",
+        hours: overtimeHours,
+        rate: overtimeRate,
         amount: lineAmount(overtime.hours, overtime.rate),
+        kind: "overtime",
       });
     }
 
@@ -214,16 +264,23 @@
       subtotal = roundMoney(subtotal + lines[i].amount);
     }
 
-    return {
+    var currency = (invoice && invoice.currency) || "CAD";
+    var result = {
       type: "hours",
       lines: lines,
       subtotal: subtotal,
       total: subtotal,
       workPeriod: formatWorkPeriod(shifts),
-      currency: (invoice && invoice.currency) || "CAD",
+      currency: currency,
       taxIncluded: false,
       showDailyHours: showDailyHours,
+      regularHours: regularHours,
+      regularRate: regularRate,
+      overtimeHours: overtimeHours,
+      overtimeRate: overtimeRate,
     };
+    result.totalLabel = formatHoursTotal(result);
+    return result;
   }
 
   function invoiceFilename(invoice) {
@@ -239,6 +296,9 @@
     roundMoney: roundMoney,
     formatMoney: formatMoney,
     formatDate: formatDate,
+    formatDayLabel: formatDayLabel,
+    formatHours: formatHours,
+    formatHoursTotal: formatHoursTotal,
     formatWorkPeriod: formatWorkPeriod,
     formatHonorariumLabel: formatHonorariumLabel,
     artistNames: artistNames,

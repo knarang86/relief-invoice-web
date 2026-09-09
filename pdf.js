@@ -116,13 +116,15 @@
     }
 
     var isHonorarium = summary.type === "honorarium";
+    var hoursX = 148;
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8);
     doc.setTextColor(TEAL[0], TEAL[1], TEAL[2]);
-    doc.text("DESCRIPTION", margin, y);
-    if (!isHonorarium) {
-      doc.text("HOURS", 118, y, { align: "right" });
-      doc.text("RATE", 148, y, { align: "right" });
+    if (isHonorarium) {
+      doc.text("DESCRIPTION", margin, y);
+    } else {
+      doc.text(summary.showDailyHours ? "DATE" : "DESCRIPTION", margin, y);
+      doc.text("HOURS", hoursX, y, { align: "right" });
     }
     doc.text("AMOUNT", right, y, { align: "right" });
     y += 3;
@@ -140,30 +142,32 @@
 
     for (i = 0; i < summary.lines.length; i += 1) {
       var item = summary.lines[i];
-      var labelLines = doc.splitTextToSize(item.label, isHonorarium ? 140 : 90);
+      var labelLines = doc.splitTextToSize(item.label, isHonorarium ? 140 : 110);
       y = ensureSpace(doc, y, Math.max(7, labelLines.length * 5 + 2), pageWidth);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
       doc.setTextColor(INK[0], INK[1], INK[2]);
       doc.text(labelLines, margin, y);
       if (!isHonorarium) {
-        doc.text(Number(item.hours || 0).toFixed(2), 118, y, { align: "right" });
-        doc.text(root.Invoice.formatMoney(item.rate, summary.currency) + "/hr", 148, y, { align: "right" });
+        doc.text(root.Invoice.formatHours(item.hours), hoursX, y, { align: "right" });
       }
       doc.text(root.Invoice.formatMoney(item.amount, summary.currency), right, y, { align: "right" });
       y += Math.max(7, labelLines.length * 5 + 2);
     }
 
     y += 2;
-    drawLine(doc, 110, y, right, y);
+    drawLine(doc, isHonorarium ? 110 : 100, y, right, y);
     y += 8;
 
+    var totalLabel = isHonorarium ? "Total Due" : summary.totalLabel || "Total Due";
+    var totalLabelLines = doc.splitTextToSize(totalLabel, pageWidth - margin * 2 - 42);
+    y = ensureSpace(doc, y, Math.max(8, totalLabelLines.length * 6 + 2), pageWidth);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
     doc.setTextColor(INK[0], INK[1], INK[2]);
-    doc.text("Total Due", 118, y);
+    doc.text(totalLabelLines, margin, y);
     doc.text(root.Invoice.formatMoney(summary.total, summary.currency), right, y, { align: "right" });
-    y += 8;
+    y += Math.max(8, totalLabelLines.length * 6);
     if (isHonorarium || summary.taxIncluded) {
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
