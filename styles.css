@@ -423,7 +423,12 @@ textarea {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  font-size: 1.1rem;
+  gap: 12px;
+  font-size: 1.05rem;
+}
+
+.total-due strong:last-child {
+  white-space: nowrap;
 }
 
 .tax-note {
